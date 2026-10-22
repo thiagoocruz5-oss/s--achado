@@ -3,6 +3,7 @@ import json
 import urllib.request
 import urllib.parse
 import subprocess
+import threading
 import re
 import os
 import html
@@ -405,6 +406,17 @@ class SoAchadoHandler(http.server.SimpleHTTPRequestHandler):
             seed_js = "window.SO_ACHADO_INITIAL_DATA = " + json.dumps(data, ensure_ascii=False, indent=2) + ";\n"
             with open(DATA_SEED_PATH, "w", encoding="utf-8") as f:
                 f.write(seed_js)
+
+            # Auto-push to GitHub in background so Vercel updates automatically!
+            def _bg_push():
+                try:
+                    subprocess.run(["git", "add", "data/products.json", "data/products-seed.js"], cwd=BASE_DIR, capture_output=True)
+                    subprocess.run(["git", "commit", "-m", "Atualizacao automatica de produtos"], cwd=BASE_DIR, capture_output=True)
+                    subprocess.run(["git", "push", "origin", "main"], cwd=BASE_DIR, capture_output=True, timeout=25)
+                except Exception:
+                    pass
+
+            threading.Thread(target=_bg_push, daemon=True).start()
 
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")

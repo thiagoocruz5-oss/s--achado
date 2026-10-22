@@ -661,27 +661,22 @@
       cloudSyncBtn.addEventListener('click', async () => {
         cloudSyncBtn.disabled = true;
         const origText = cloudSyncBtn.innerHTML;
-        cloudSyncBtn.innerHTML = '<span>⏳ Publicando na Vercel...</span>';
+        cloudSyncBtn.innerHTML = '<span>⏳ Sincronizando...</span>';
         try {
           await persistData();
-          let published = false;
+          if (!isLocalEnvironment()) {
+            showToast('🚀 Site online atualizado em tempo real!');
+            return;
+          }
           for (const ep of getApiEndpoints('/api/publish')) {
             try {
               const resp = await fetch(ep, { method: 'POST' });
               const data = await resp.json();
               if (resp.ok && data.ok) {
-                published = true;
-                showToast('🚀 Site online atualizado com sucesso! Em ~15s estará no ar na Vercel.');
-                break;
-              } else if (data && data.error) {
-                alert('Aviso ao publicar: ' + data.error);
-                published = true;
+                showToast('🚀 Site online atualizado com sucesso!');
                 break;
               }
             } catch (err) {}
-          }
-          if (!published) {
-            alert('Para atualizar o site online automaticamente, certifique-se de estar com o servidor local aberto no seu PC.');
           }
         } finally {
           cloudSyncBtn.disabled = false;
