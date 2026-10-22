@@ -380,8 +380,32 @@ class SoAchadoHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_get_products(self):
         try:
-            with open(DATA_JSON_PATH, "r", encoding="utf-8") as f:
-                content = f.read()
+            content = None
+            try:
+                ptr_req = urllib.request.Request(
+                    "https://api.restful-api.dev/objects/ff808181a09d98f701a16490e8ad5ca9",
+                    headers={"User-Agent": "SoAchado/1.0"},
+                )
+                ptr_json = json.loads(urllib.request.urlopen(ptr_req, context=ssl_ctx, timeout=5).read().decode("utf-8"))
+                key = (ptr_json.get("data") or {}).get("key")
+                if key:
+                    bin_req = urllib.request.Request(
+                        f"https://bytebin.lucko.me/{key}",
+                        headers={"User-Agent": "SoAchado/1.0"},
+                    )
+                    cloud_str = urllib.request.urlopen(bin_req, context=ssl_ctx, timeout=5).read().decode("utf-8")
+                    cloud_obj = json.loads(cloud_str)
+                    if isinstance(cloud_obj, dict) and "products" in cloud_obj:
+                        content = json.dumps(cloud_obj, ensure_ascii=False, indent=2)
+                        with open(DATA_JSON_PATH, "w", encoding="utf-8") as f:
+                            f.write(content)
+            except Exception:
+                pass
+
+            if not content:
+                with open(DATA_JSON_PATH, "r", encoding="utf-8") as f:
+                    content = f.read()
+
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Cache-Control", "no-store")
@@ -407,7 +431,28 @@ class SoAchadoHandler(http.server.SimpleHTTPRequestHandler):
             with open(DATA_SEED_PATH, "w", encoding="utf-8") as f:
                 f.write(seed_js)
 
-            # Auto-push to GitHub in background so Vercel updates automatically!
+            # Save directly to Cloud Store (Bytebin + Pointer) so Vercel site has it immediately!
+            try:
+                req1 = urllib.request.Request(
+                    "https://bytebin.lucko.me/post",
+                    data=json.dumps(data, ensure_ascii=False).encode("utf-8"),
+                    headers={"Content-Type": "application/json", "User-Agent": "SoAchado/1.0"},
+                    method="POST",
+                )
+                res1 = json.loads(urllib.request.urlopen(req1, context=ssl_ctx, timeout=6).read().decode("utf-8"))
+                new_key = res1.get("key")
+                if new_key:
+                    req2 = urllib.request.Request(
+                        "https://api.restful-api.dev/objects/ff808181a09d98f701a16490e8ad5ca9",
+                        data=json.dumps({"name": "so_achado_store", "data": {"key": new_key}}).encode("utf-8"),
+                        headers={"Content-Type": "application/json", "User-Agent": "SoAchado/1.0"},
+                        method="PUT",
+                    )
+                    urllib.request.urlopen(req2, context=ssl_ctx, timeout=6)
+            except Exception:
+                pass
+
+            # Auto-push to GitHub in background so Vercel static seed also stays updated!
             def _bg_push():
                 try:
                     subprocess.run(["git", "add", "data/products.json", "data/products-seed.js"], cwd=BASE_DIR, capture_output=True)

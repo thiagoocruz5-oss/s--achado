@@ -1,88 +1,97 @@
-// API Serverless na Vercel para ler e salvar produtos em tempo real
-const REPO = 'thiagoocruz5-oss/s--achado';
-const FILE_PATH = 'data/products.json';
+// API Serverless na Vercel com Banco em Nuvem em Tempo Real (Sem necessidade de configurar tokens)
+const POINTER_URL = 'https://api.restful-api.dev/objects/ff808181a09d98f701a16490e8ad5ca9';
+const BYTEBIN_POST = 'https://bytebin.lucko.me/post';
+const BYTEBIN_BASE = 'https://bytebin.lucko.me/';
+const GITHUB_FALLBACK = 'https://raw.githubusercontent.com/thiagoocruz5-oss/s--achado/main/data/products.json';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-gh-token');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  const token = process.env.GITHUB_TOKEN || req.headers['x-gh-token'] || '';
-  const apiUrl = `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`;
-
   if (req.method === 'GET') {
     try {
-      const headers = {
-        Accept: 'application/vnd.github.raw+json',
-        'User-Agent': 'SoAchado-Vercel'
-      };
-      if (token) headers.Authorization = `Bearer ${token}`;
-
-      const ghRes = await fetch(apiUrl, { headers, cache: 'no-store' });
-      if (!ghRes.ok) {
-        throw new Error('Falha ao ler dados da nuvem: ' + ghRes.status);
+      // 1. Ler ponteiro atual na nuvem
+      const ptrRes = await fetch(POINTER_URL, {
+        headers: { 'User-Agent': 'SoAchado/1.0' },
+        cache: 'no-store'
+      });
+      if (ptrRes.ok) {
+        const ptrJson = await ptrRes.json();
+        const key = ptrJson && ptrJson.data && ptrJson.data.key;
+        if (key) {
+          const binRes = await fetch(`${BYTEBIN_BASE}${key}`, {
+            headers: { 'User-Agent': 'SoAchado/1.0' },
+            cache: 'no-store'
+          });
+          if (binRes.ok) {
+            const data = await binRes.json();
+            if (data && Array.isArray(data.products)) {
+              return res.status(200).json(data);
+            }
+          }
+        }
       }
-      const data = await ghRes.json();
-      res.setHeader('Cache-Control', 'no-store, max-age=0');
-      return res.status(200).json(data);
+
+      // 2. Fallback para o arquivo no GitHub
+      const ghRes = await fetch(GITHUB_FALLBACK, { cache: 'no-store' });
+      const ghData = await ghRes.json();
+      return res.status(200).json(ghData);
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
   }
 
   if (req.method === 'POST') {
-    if (!token) {
-      return res.status(401).json({
-        error: 'Configure o GITHUB_TOKEN nas variaveis da Vercel ou use o painel local para sincronizar.'
-      });
-    }
-
     try {
       const payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
       if (!payload || !Array.isArray(payload.products)) {
         return res.status(400).json({ error: 'Formato de dados invalido' });
       }
 
-      const metaRes = await fetch(apiUrl, {
+      // 1. Salvar JSON completo no Bytebin
+      const postRes = await fetch(BYTEBIN_POST, {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/vnd.github+json',
-          'User-Agent': 'SoAchado-Vercel'
+          'Content-Type': 'application/json',
+          'User-Agent': 'SoAchado/1.0'
         },
-        cache: 'no-store'
+        body: JSON.stringify(payload)
       });
-      let sha = undefined;
-      if (metaRes.ok) {
-        const metaJson = await metaRes.json();
-        sha = metaJson.sha;
+
+      if (!postRes.ok) {
+        throw new Error('Falha ao gravar dados na nuvem: ' + postRes.status);
       }
 
-      const contentBase64 = Buffer.from(JSON.stringify(payload, null, 2), 'utf-8').toString('base64');
-      const putRes = await fetch(apiUrl, {
+      const postJson = await postRes.json();
+      const newKey = postJson.key;
+
+      // 2. Atualizar ponteiro em tempo real
+      const putRes = await fetch(POINTER_URL, {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/vnd.github+json',
           'Content-Type': 'application/json',
-          'User-Agent': 'SoAchado-Vercel'
+          'User-Agent': 'SoAchado/1.0'
         },
         body: JSON.stringify({
-          message: 'Atualizacao automatica de produtos via Painel Online So Achado',
-          content: contentBase64,
-          sha
+          name: 'so_achado_store',
+          data: {
+            key: newKey,
+            updatedAt: Date.now()
+          }
         })
       });
 
       if (!putRes.ok) {
-        const errText = await putRes.text();
-        return res.status(500).json({ error: 'Erro ao salvar na nuvem: ' + errText });
+        throw new Error('Falha ao atualizar ponteiro na nuvem: ' + putRes.status);
       }
 
-      return res.status(200).json({ ok: true });
+      return res.status(200).json({ ok: true, key: newKey });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
