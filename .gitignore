@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+data/.chrome_ml_profile/
+.vercel

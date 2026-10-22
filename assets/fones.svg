@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="100%" height="100%">
+  <defs>
+    <linearGradient id="caseBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="65%" stop-color="#f3f5f8"/>
+      <stop offset="100%" stop-color="#dde2ea"/>
+    </linearGradient>
+    <linearGradient id="caseInner" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#d2d7e0"/>
+      <stop offset="100%" stop-color="#eef1f6"/>
+    </linearGradient>
+    <filter id="podShadow" x="-20%" y="-15%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#1e293b" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+  <g filter="url(#podShadow)">
+    <!-- Left Earbud floating above case -->
+    <g transform="translate(0, -4)">
+      <rect x="115" y="72" width="14" height="58" rx="7" fill="url(#caseBody)" stroke="#e2e8f0" stroke-width="1"/>
+      <ellipse cx="114" cy="70" rx="22" ry="18" fill="url(#caseBody)" stroke="#e2e8f0" stroke-width="1"/>
+      <ellipse cx="103" cy="69" rx="5" ry="9" fill="#1e293b"/>
+      <ellipse cx="122" cy="73" rx="3.5" ry="2" fill="#334155"/>
+      <rect x="118" y="124" width="8" height="4" rx="2" fill="#94a3b8"/>
+    </g>
+    <!-- Right Earbud floating above case -->
+    <g transform="translate(0, -4)">
+      <rect x="171" y="72" width="14" height="58" rx="7" fill="url(#caseBody)" stroke="#e2e8f0" stroke-width="1"/>
+      <ellipse cx="186" cy="70" rx="22" ry="18" fill="url(#caseBody)" stroke="#e2e8f0" stroke-width="1"/>
+      <ellipse cx="197" cy="69" rx="5" ry="9" fill="#1e293b"/>
+      <ellipse cx="178" cy="73" rx="3.5" ry="2" fill="#334155"/>
+      <rect x="174" y="124" width="8" height="4" rx="2" fill="#94a3b8"/>
+    </g>
+    <!-- Charging Case Lid (Open/Back) -->
+    <path d="M88,145 C88,118 212,118 212,145 Z" fill="url(#caseInner)" stroke="#e2e8f0" stroke-width="1.5"/>
+    <!-- Charging Case Main Body -->
+    <rect x="85" y="140" width="130" height="114" rx="34" fill="url(#caseBody)" stroke="#e2e8f0" stroke-width="1.5"/>
+    <!-- Lid line -->
+    <line x1="86" y1="168" x2="214" y2="168" stroke="#cbd5e1" stroke-width="1.5"/>
+    <!-- Center pairing button / indent -->
+    <circle cx="150" cy="195" r="4" fill="#22c55e"/>
+    <circle cx="150" cy="195" r="7" fill="none" stroke="rgba(34,197,94,0.25)" stroke-width="2"/>
+  </g>
+</svg>

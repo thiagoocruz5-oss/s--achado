@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SÓ ACHADO — A sua curadoria inteligente de ofertas e garimpos online</title>
+  <meta name="description" content="Curadoria diária dos melhores produtos e pechinchas da internet, com links diretos para o Mercado Livre." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="container header-top">
+      <div class="brand-area">
+        <div class="brand-logo" id="logoResetBtn" title="Voltar ao início">
+          <!-- Custom SVG Logo matching reference image -->
+          <svg class="logo-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Magnifying glass handle -->
+            <path d="M19 42L9 54" stroke="#351147" stroke-width="6.5" stroke-linecap="round"/>
+            <!-- Magnifying glass ring -->
+            <circle cx="29" cy="26" r="17" fill="#ffffff" stroke="#351147" stroke-width="5.5"/>
+            <!-- Star inside lens -->
+            <path d="M27 16.5L29.4 21.3L34.7 22.1L30.8 25.8L31.7 31.1L27 28.6L22.3 31.1L23.2 25.8L19.3 22.1L24.6 21.3L27 16.5Z" fill="#f06449"/>
+            <!-- Coral shopping bag overlapping bottom-right of lens -->
+            <rect x="30" y="34" width="21" height="20" rx="3.5" fill="#f06449"/>
+            <path d="M36 34V31C36 28.5 38 26.5 40.5 26.5C43 26.5 45 28.5 45 31V34" stroke="#f06449" stroke-width="3" stroke-linecap="round"/>
+            <path d="M36 36V38M45 36V38" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <div class="logo-text">
+            <span class="logo-so">SÓ</span>
+            <span class="logo-achado">ACHADO</span>
+          </div>
+        </div>
+        <p class="brand-tagline">
+          A sua curadoria inteligente<br />de ofertas e garimpos online
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="Busca" aria-label="Buscar produtos" />
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+
+        <button class="btn-quick-add" id="openAddModalBtn" title="Adicionar produto do Mercado Livre com poucos cliques">
+          <span>+ Novo Achado</span>
+        </button>
+
+        <button class="btn-cloud-sync" id="cloudSyncBtn" title="Enviar produtos novos para o site online na Vercel">
+          <span>🚀 Atualizar Site Online</span>
+        </button>
+
+        <button class="icon-btn" id="adminToggleBtn" title="Acesso do Administrador (👤)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </button>
+
+        <button class="icon-btn" id="favFilterBtn" title="Ver meus favoritos">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+          <span class="fav-count" id="favCountBadge" style="display: none;">0</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ==================== CATEGORY BAR ==================== -->
+    <nav class="category-nav" aria-label="Categorias">
+      <div class="container">
+        <ul class="category-list" id="categoryList">
+          <li>
+            <button class="category-btn active" data-category="todos">
+              <span class="cat-emoji">🔥</span> Achados do Dia
+            </button>
+          </li>
+          <li>
+            <button class="category-btn" data-category="casa">
+              <span class="cat-emoji">🏠</span> Casa &amp; Praticidade
+            </button>
+          </li>
+          <li>
+            <button class="category-btn" data-category="tecnologia">
+              <span class="cat-emoji">💻</span> Tecnologia
+            </button>
+          </li>
+          <li>
+            <button class="category-btn" data-category="beleza">
+              <span class="cat-emoji">✨</span> Beleza &amp; Estilo
+            </button>
+          </li>
+          <li>
+            <button class="category-btn" data-category="variedades">
+              <span class="cat-emoji">🧸</span> Variedades
+            </button>
+          </li>
+          <li>
+            <button class="category-btn" id="navGroupBtn" data-category="grupo">
+              <span class="cat-emoji">🚀</span> Grupo de Ofertas
+            </button>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <main class="container">
+    <!-- HERO BANNER -->
+    <section class="hero-section">
+      <div class="hero-banner">
+        <!-- Rich SVG Artwork reproducing the exact banner from the reference image -->
+        <svg class="hero-bg-svg" viewBox="0 0 1140 240" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bgBase" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#4e1f6e"/>
+              <stop offset="50%" stop-color="#351147"/>
+              <stop offset="100%" stop-color="#2a0c38"/>
+            </linearGradient>
+            <linearGradient id="waveLeft" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#f05a4f"/>
+              <stop offset="55%" stop-color="#f47b50"/>
+              <stop offset="100%" stop-color="#a22c72"/>
+            </linearGradient>
+            <linearGradient id="waveRight" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ff6b52"/>
+              <stop offset="60%" stop-color="#e3496f"/>
+              <stop offset="100%" stop-color="#6c1d5f"/>
+            </linearGradient>
+            <linearGradient id="waveTeal" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#0b6170"/>
+              <stop offset="60%" stop-color="#158594"/>
+              <stop offset="100%" stop-color="#28587b"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Base Deep Purple -->
+          <rect width="1140" height="240" fill="url(#bgBase)"/>
+
+          <!-- Left Coral/Magenta Organic Wave -->
+          <path d="M-40,250 C60,150 90,115 160,60 C230,5 330,-20 420,25 C340,95 360,185 260,235 C180,275 40,260 -40,250 Z" fill="url(#waveLeft)" opacity="0.92"/>
+
+          <!-- Right Coral/Pink Ribbon Wave -->
+          <path d="M840,-20 C940,10 920,145 780,195 C670,235 890,260 1160,220 L1160,-20 Z" fill="url(#waveRight)" opacity="0.95"/>
+
+          <!-- Bottom Right Teal Wave -->
+          <path d="M460,245 C580,190 730,195 860,165 C960,142 1040,75 1150,40 L1150,245 Z" fill="url(#waveTeal)" opacity="0.9"/>
+
+          <!-- Decorative Subtle Circles -->
+          <circle cx="90" cy="48" r="58" fill="#ffffff" opacity="0.05"/>
+          <circle cx="330" cy="215" r="32" fill="#b8336a" opacity="0.35"/>
+          <circle cx="710" cy="40" r="38" fill="#ffffff" opacity="0.04"/>
+
+          <!-- Illustration 1: Shopping Bag (Left) -->
+          <g transform="translate(195, 38) rotate(12)">
+            <path d="M16,14 C16,6 28,6 28,14" fill="none" stroke="#351147" stroke-width="3.5" stroke-linecap="round"/>
+            <rect x="4" y="14" width="36" height="40" rx="5" fill="#ff784f"/>
+            <circle cx="15" cy="20" r="2" fill="#351147"/>
+            <circle cx="29" cy="20" r="2" fill="#351147"/>
+          </g>
+
+          <!-- Illustration 2: Blue Bell / Lamp Icon (Left-Mid) -->
+          <g transform="translate(115, 102) rotate(-14)">
+            <path d="M18,6 C28,6 34,14 34,26 L2,26 C2,14 8,6 18,6 Z" fill="#2c8c99"/>
+            <rect x="0" y="25" width="36" height="6" rx="3" fill="#ff784f"/>
+            <circle cx="18" cy="34" r="4" fill="#ffae42"/>
+          </g>
+
+          <!-- Illustration 3: Washing Machine / Appliance (Bottom-Left) -->
+          <g transform="translate(182, 138) rotate(16)">
+            <rect x="0" y="0" width="48" height="58" rx="8" fill="#2a8c9e"/>
+            <rect x="0" y="0" width="48" height="14" rx="5" fill="#ff784f"/>
+            <circle cx="10" cy="7" r="2.2" fill="#351147"/>
+            <circle cx="17" cy="7" r="2.2" fill="#351147"/>
+            <circle cx="24" cy="36" r="15" fill="#351147" stroke="#ff9a76" stroke-width="3.5"/>
+            <circle cx="24" cy="36" r="8" fill="#52b6c6" opacity="0.5"/>
+          </g>
+
+          <!-- Illustration 4: Party Popper & Confetti (Top-Right) -->
+          <g transform="translate(830, 32) rotate(10)">
+            <polygon points="0,42 18,8 34,26" fill="#ff784f"/>
+            <path d="M7,29 L23,34 M13,18 L29,28" stroke="#351147" stroke-width="3"/>
+            <path d="M28,8 C36,2 44,6 48,12" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+            <path d="M36,20 C45,18 52,24 54,30" fill="none" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="24" cy="2" r="3" fill="#f43f5e"/>
+            <circle cx="44" cy="2" r="2.5" fill="#fbbf24"/>
+            <circle cx="48" cy="18" r="3" fill="#ff784f"/>
+          </g>
+
+          <!-- Illustration 5: Telegram Badge (Right) -->
+          <g transform="translate(918, 92) rotate(-8)">
+            <circle cx="26" cy="26" r="24" fill="#287a94" stroke="#47a3bd" stroke-width="2" stroke-dasharray="4 3"/>
+            <path d="M14,26 L36,16 L31,37 L24,31 L20,34 L21,28 Z" fill="#ff8559"/>
+          </g>
+
+          <!-- Illustration 6: Gift Box (Bottom-Right) -->
+          <g transform="translate(830, 146) rotate(-10)">
+            <rect x="4" y="14" width="42" height="36" rx="4" fill="#f05a4f"/>
+            <rect x="0" y="6" width="50" height="11" rx="3" fill="#ff7b54"/>
+            <rect x="21" y="6" width="8" height="44" fill="#351147"/>
+            <rect x="4" y="27" width="42" height="7" fill="#351147"/>
+            <path d="M25,6 C16,-4 8,4 18,6 C25,6 34,-4 38,4 C40,6 30,6 25,6 Z" fill="none" stroke="#2dd4bf" stroke-width="3.5" stroke-linecap="round"/>
+          </g>
+        </svg>
+
+        <div class="hero-content">
+          <h1 class="hero-title">Achados que valem a pena!</h1>
+          <p class="hero-subtitle">
+            Curadoria diária dos melhores produtos e<br />
+            pechinchas da internet, com links diretos.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRODUCTS GRID SECTION -->
+    <section class="products-section">
+      <div class="section-header">
+        <h2 class="section-title" id="sectionTitle">Garimpos Imperdíveis da Semana</h2>
+        <div class="section-meta">
+          <span id="productCountText">4 ofertas selecionadas</span>
+        </div>
+      </div>
+
+      <div class="products-grid" id="productsGrid">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== FLOATING WHATSAPP / TELEGRAM CARD ==================== -->
+  <aside class="floating-promo-card" id="floatingPromoCard">
+    <button class="close-floating-btn" id="closeFloatingBtn" title="Fechar aviso" aria-label="Fechar">×</button>
+    <div class="phone-badge-icon">
+      <div class="phone-screen">
+        <!-- WhatsApp SVG Icon -->
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="#ffffff">
+          <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824z"/>
+        </svg>
+      </div>
+    </div>
+    <div class="floating-promo-text">
+      <div class="floating-headline">Receba achados exclusivos direto no seu celular!</div>
+      <a href="https://chat.whatsapp.com/" target="_blank" rel="noopener" class="floating-wa-link" id="floatingWaLink">[Entrar no grupo de WhatsApp]</a>
+      <a href="https://t.me/" target="_blank" rel="noopener" class="floating-tg-btn" id="floatingTgLink">Grupo de Promoções no Telegram</a>
+    </div>
+  </aside>
+
+  <!-- ==================== MODAL PAINEL DE AFILIADO (POUCOS CLIQUES) ==================== -->
+  <div class="modal-overlay" id="adminModal">
+    <div class="modal-box" role="dialog" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">
+          <span>⚡ Publicar Anúncio no SÓ ACHADO</span>
+        </h3>
+        <button class="modal-close" id="closeModalBtn" aria-label="Fechar">×</button>
+      </div>
+
+      <div class="modal-tabs">
+        <button class="modal-tab active" data-tab="tab-add">➕ Adicionar / Editar Produto</button>
+        <button class="modal-tab" data-tab="tab-bookmarklet">🔖 Botão 1-Clique (Navegador)</button>
+        <button class="modal-tab" data-tab="tab-settings">⚙️ Grupos &amp; Backup</button>
+      </div>
+
+      <!-- ABA 1: ADICIONAR PRODUTO COM POUCOS CLIQUES -->
+      <div class="tab-panel active" id="tab-add">
+        <div class="magic-paste-box">
+          <div class="magic-label">
+            <span>PASSO 1: Cole o link de afiliado (ou texto do Mercado Livre)</span>
+            <span style="font-size: 11px; color: #f06449;">Preenchimento Automático</span>
+          </div>
+          <p class="magic-hint">
+            Cole seu link curto (ex: <strong>mercadolivre.com/sec/...</strong>) ou o link do anúncio. O sistema busca foto, título e preço automaticamente!
+          </p>
+          <div class="magic-input-row">
+            <input type="text" id="magicUrlInput" placeholder="Cole aqui o link ou texto compartilhado do Mercado Livre..." />
+            <button type="button" class="btn-extract" id="extractBtn">
+              <span>🔍 Puxar Dados</span>
+            </button>
+          </div>
+          <div class="extract-status" id="extractStatus"></div>
+        </div>
+
+        <form id="productForm">
+          <input type="hidden" id="prodId" value="" />
+          <div class="form-grid">
+            <div class="preview-card-mini">
+              <div class="preview-img-wrap">
+                <img id="previewImg" src="assets/airfryer.svg" alt="Prévia do Produto" />
+              </div>
+              <span class="preview-caption">Prévia da Foto</span>
+            </div>
+
+            <div class="form-fields">
+              <div class="field-group">
+                <label for="prodTitle">Nome do Produto *</label>
+                <input type="text" id="prodTitle" required placeholder="Ex: Fritadeira elétrica sem óleo 4L" />
+              </div>
+
+              <div class="field-row">
+                <div class="field-group">
+                  <label for="prodPrice">Preço em Oferta (R$) *</label>
+                  <input type="text" id="prodPrice" required placeholder="Ex: 189,90" />
+                </div>
+                <div class="field-group">
+                  <label for="prodOldPrice">Preço Antigo Riscado (R$)</label>
+                  <input type="text" id="prodOldPrice" placeholder="Ex: 249,90 (opcional)" />
+                </div>
+              </div>
+
+              <div class="field-row">
+                <div class="field-group">
+                  <label for="prodBadge">Selo de Destaque</label>
+                  <select id="prodBadge">
+                    <option value="MAIS VENDIDO|purple">🟣 MAIS VENDIDO</option>
+                    <option value="MENOR PREÇO|green">🟢 MENOR PREÇO</option>
+                    <option value="ACHADO ÚTIL|coral">🟠 ACHADO ÚTIL</option>
+                    <option value="FRETE GRÁTIS|teal">🔵 FRETE GRÁTIS</option>
+                    <option value="OFERTA RELÂMPAGO|coral">🔥 OFERTA RELÂMPAGO</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="prodCategory">Categoria no Site</label>
+                  <select id="prodCategory">
+                    <option value="casa">🏠 Casa &amp; Praticidade</option>
+                    <option value="tecnologia">💻 Tecnologia</option>
+                    <option value="beleza">✨ Beleza &amp; Estilo</option>
+                    <option value="variedades">🧸 Variedades</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="field-row">
+                <div class="field-group">
+                  <label for="prodButtonStyle">Estilo do Botão</label>
+                  <select id="prodButtonStyle">
+                    <option value="Ir para o parceiro|coral">🟠 Ir para o parceiro ↗ (Coral)</option>
+                    <option value="Aproveitar Oferta|teal">🔵 Aproveitar Oferta ↗ (Azul-Petróleo)</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="prodRating">Avaliação (Estrelas)</label>
+                  <input type="text" id="prodRating" value="4.8" placeholder="Ex: 4.8" />
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label for="prodImage">Link da Imagem do Produto *</label>
+                <input type="text" id="prodImage" required placeholder="URL da foto (preenchido automaticamente)" />
+              </div>
+
+              <div class="field-group">
+                <label for="prodAffiliateUrl">Seu Link de Afiliado Mercado Livre *</label>
+                <input type="url" id="prodAffiliateUrl" required placeholder="https://mercadolivre.com/sec/..." />
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" id="clearFormBtn">Limpar Campos</button>
+            <button type="submit" class="btn-primary-save" id="saveProdBtn">✅ Publicar no Site</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ABA 2: BOOKMARKLET 1-CLIQUE -->
+      <div class="tab-panel" id="tab-bookmarklet">
+        <div class="bookmarklet-card">
+          <h4 style="color: #351147; font-size: 16px; margin-bottom: 6px;">Capture qualquer produto direto da página do Mercado Livre!</h4>
+          <p style="font-size: 13px; color: #686370;">
+            Se o Mercado Livre pedir verificação ou você quiser enviar um produto enquanto navega lá, arraste o botão laranja abaixo para a <strong>Barra de Favoritos</strong> do seu navegador:
+          </p>
+
+          <a href="#" class="bookmarklet-drag-btn" id="bookmarkletLink" title="Arraste este botão para a barra de favoritos do seu navegador">
+            ⚡ Enviar para SÓ ACHADO
+          </a>
+
+          <ol class="steps-list">
+            <li><strong>Arraste o botão laranja acima</strong> e solte na barra de favoritos do seu Chrome/Edge/Brave.</li>
+            <li>Abra a página de qualquer produto no <strong>Mercado Livre</strong> e copie seu link de afiliado.</li>
+            <li>Clique em <strong>"⚡ Enviar para SÓ ACHADO"</strong> nos seus favoritos: ele captura foto em alta qualidade, título, preço atual e preço riscado na hora e abre o SÓ ACHADO pronto para salvar!</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- ABA 3: CONFIGURAÇÕES DE GRUPOS E BACKUP -->
+      <div class="tab-panel" id="tab-settings">
+        <div class="form-fields">
+          <div class="field-group">
+            <label for="setWhatsappUrl">Link do Grupo de WhatsApp (Card Flutuante e Menu)</label>
+            <input type="url" id="setWhatsappUrl" placeholder="https://chat.whatsapp.com/..." />
+          </div>
+          <div class="field-group">
+            <label for="setTelegramUrl">Link do Grupo de Promoções no Telegram</label>
+            <input type="url" id="setTelegramUrl" placeholder="https://t.me/..." />
+          </div>
+          <div class="field-group">
+            <label for="setAdminPassword">Senha do Painel Admin (para acessar pelo ícone 👤 na internet)</label>
+            <input type="text" id="setAdminPassword" value="admin123" placeholder="Ex: admin123" />
+          </div>
+          <div class="field-group" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 4px;">
+            <input type="checkbox" id="setShowFloating" checked style="width: 18px; height: 18px;" />
+            <label for="setShowFloating" style="font-size: 13.5px; cursor: pointer;">Exibir card flutuante de WhatsApp/Telegram no canto inferior direito</label>
+          </div>
+
+          <div class="modal-footer" style="justify-content: space-between; flex-wrap: wrap;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn-secondary" id="lockAdminBtn" title="Ocultar botões de edição e ver o site como os clientes veem">👁️ Ver como Visitante</button>
+              <button type="button" class="btn-secondary" id="exportJsonBtn" title="Baixar arquivo com todos os produtos">⬇️ Exportar Backup</button>
+              <button type="button" class="btn-secondary" id="resetDefaultBtn" title="Restaurar os 4 produtos de exemplo da imagem">🔄 Restaurar Exemplo</button>
+            </div>
+            <button type="button" class="btn-primary-save" id="saveSettingsBtn">Salvar Configurações</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toastMsg">Produto adicionado com sucesso!</div>
+
+  <script src="data/products-seed.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
