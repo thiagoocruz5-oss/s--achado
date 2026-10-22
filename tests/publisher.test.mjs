@@ -68,7 +68,7 @@ test('API recusa chaves de páginas de origem externa e permite apenas saúde p�
   const health=response();await handler({method:'GET',headers:{},query:{health:'1'}},health);assert.equal(health.body.protocol,PROTOCOL);assert.equal(health.body.protected,true);
 });
 test('adaptador privado exige leitura consistente e CAS, gravando primeiro o backup',async()=> {
-  const calls=[];const sdk={get:async(path,opts)=>{calls.push(['get',opts]);return {stream:new Blob([JSON.stringify({revision:'old'})]).stream(),blob:{etag:'old-etag'}};},
+  const calls=[];const sdk={head:async()=>({etag:'old-etag'}),get:async(path,opts)=>{calls.push(['get',opts]);return {stream:new Blob([JSON.stringify({revision:'old'})]).stream(),blob:{etag:'download-etag'}};},
     put:async(path,body,opts)=>calls.push(['put',path,opts])};
   const store=createBlobStore(sdk),current=await store.read();await store.writeBackup({id:randomUUID()});await store.compareAndSwap(current,{revision:'new'});
   assert.equal(calls[0][1].useCache,false);assert.equal(calls[1][2].access,'private');assert.equal(calls[1][2].allowOverwrite,false);assert.equal(calls[2][2].ifMatch,'old-etag');
@@ -100,7 +100,7 @@ test('alterar configurações no editor preserva a verificação das ofertas ina
 });
 
 test('prévia usa caminhos de armazenamento diferentes de produção',async()=>{
-  const paths=[];const sdk={get:async path=>{paths.push(path);return null;},put:async path=>paths.push(path)};
+  const paths=[];const sdk={head:async()=>({etag:'test-etag'}),get:async path=>{paths.push(path);return null;},put:async path=>paths.push(path)};
   const preview=createBlobStore(sdk,{prefix:'so-achado-preview/test'}),production=createBlobStore(sdk);
   await preview.read();await preview.writeBackup({id:randomUUID()});await production.read();
   assert.equal(paths[0],'so-achado-preview/test/catalog/current.json');
