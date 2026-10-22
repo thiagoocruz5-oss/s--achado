@@ -199,6 +199,7 @@
       if (response.status === 401) sessionStorage.removeItem('so_achado_write_key');
       if (!response.ok || !result.ok) throw new Error(result.error || 'Gravação não confirmada.');
       catalogRevision=result.revision;
+      sessionStorage.setItem('so_achado_last_backup',result.backupId);
       state.products=result.catalog.products;state.settings=result.catalog.settings;
       sessionStorage.setItem('so_achado_write_key',key);
       localStorage.setItem(STORAGE_KEY,JSON.stringify({products:state.products,settings:state.settings}));
@@ -783,6 +784,19 @@
     });
 
     // Export JSON / Seed for Static Hosting
+    document.getElementById('undoLastChangeBtn').addEventListener('click',async()=>{
+      const backupId=sessionStorage.getItem('so_achado_last_backup');
+      if(!backupId){showToast('Nenhuma alteração desta sessão disponível para desfazer.');return;}
+      if(!confirm('Recuperar o catálogo anterior à última alteração desta sessão?'))return;
+      try {
+        const key=await window.SO_ACHADO_AUTH.askKey();if(!key)return;
+        const response=await fetch('/api/radar',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},
+          body:JSON.stringify({action:'restore',backupId,expectedRevision:catalogRevision,operationId:crypto.randomUUID()})});
+        const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Recuperação não confirmada.');
+        sessionStorage.removeItem('so_achado_last_backup');
+        await loadData();applySettingsToUI();renderProducts();closeModal();showToast('Catálogo anterior recuperado e conferido.');
+      }catch(error){showToast('Não foi possível recuperar: '+error.message);}
+    });
     exportJsonBtn.addEventListener('click', () => {
       const exportObj = {
         settings: state.settings,
