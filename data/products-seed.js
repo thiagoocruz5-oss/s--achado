@@ -6,6 +6,20 @@ window.SO_ACHADO_INITIAL_DATA = {
   },
   "products": [
     {
+      "id": "prod-1792690060652",
+      "title": "Notebook Acer Aspire Go 15 AG15-71P-5939 - Intel Core i5-13420H 13ª Geração • 8GB DDR5 • 256GB SSD NVMe • Tela 15,6' • Windows 11 Home",
+      "price": 3734,
+      "oldPrice": 5717,
+      "rating": "4.8",
+      "badge": "MAIS VENDIDO",
+      "badgeColor": "purple",
+      "category": "tecnologia",
+      "buttonText": "Ir para o parceiro",
+      "buttonStyle": "coral",
+      "image": "https://http2.mlstatic.com/D_NQ_NP_2X_631355-MLA118072725823_092026-F.webp",
+      "affiliateUrl": "https://meli.la/1zBXnav"
+    },
+    {
       "id": "prod-1792686107284",
       "title": "Cadeira De Escritorio Begonia Tela Mesh Ergonomica Giratoria Preto Espuma",
       "price": 116.02,
@@ -18,20 +32,6 @@ window.SO_ACHADO_INITIAL_DATA = {
       "buttonStyle": "coral",
       "image": "https://http2.mlstatic.com/D_NQ_NP_2X_704151-MLB116985411119_082026-F.webp",
       "affiliateUrl": "https://meli.la/2gXGN2G"
-    },
-    {
-      "id": "prod-1792620089938",
-      "title": "Parafusadeira Furadeira 48v Profissional 2 Baterias Sem Fio",
-      "price": 125.61,
-      "oldPrice": 299.9,
-      "rating": "4.8",
-      "badge": "MAIS VENDIDO",
-      "badgeColor": "purple",
-      "category": "casa",
-      "buttonText": "Ir para o parceiro",
-      "buttonStyle": "coral",
-      "image": "https://http2.mlstatic.com/D_NQ_NP_2X_951617-MLB110943565198_052026-F-parafusadeira-furadeira-48v-profissional-2-baterias-sem-fio.webp",
-      "affiliateUrl": "https://meli.la/1jW7MPH"
     },
     {
       "id": "prod-1792619928656",

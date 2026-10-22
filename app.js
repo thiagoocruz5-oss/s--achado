@@ -2,6 +2,7 @@
   const STORAGE_KEY = 'so_achado_data_v1';
   const FAV_KEY = 'so_achado_favs_v1';
 
+  let catalogRevision = '';
   let state = {
     products: [],
     settings: {
@@ -125,6 +126,7 @@
   const LOCAL_API_BASE = 'http://127.0.0.1:3000';
 
   function getApiEndpoints(path) {
+    if (!isLocalEnvironment()) return [path];
     const list = [`${LOCAL_API_BASE}${path}`];
     if (window.location.protocol.startsWith('http') && window.location.origin !== LOCAL_API_BASE) {
       list.unshift(path);
@@ -140,6 +142,7 @@
         if (res.ok) {
           const serverData = await res.json();
           if (serverData && Array.isArray(serverData.products)) {
+            catalogRevision = serverData.revision || "";
             state.products = serverData.products;
             if (serverData.settings) state.settings = { ...state.settings, ...serverData.settings };
             localStorage.setItem(STORAGE_KEY, JSON.stringify({ products: state.products, settings: state.settings }));
@@ -174,25 +177,36 @@
   }
 
   async function persistData() {
-    const payload = {
-      settings: state.settings,
-      products: state.products
-    };
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    } catch (e) {}
-
-    for (const ep of getApiEndpoints('/api/products')) {
-      try {
-        const r = await fetch(ep, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (r.ok) break;
-      } catch (e) {
-        // Works offline via localStorage
+    // Mantém o editor do servidor Python e o modo offline existentes.
+    if (isLocalEnvironment() && !catalogRevision) {
+      const payload={settings:state.settings,products:state.products};
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(payload));
+      for(const ep of getApiEndpoints('/api/products')) {
+        try {const r=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(r.ok)break;}catch{}
       }
+      return true;
+    }
+    try {
+      const key = await window.SO_ACHADO_AUTH.askKey();
+      if (!key) {await loadData();applySettingsToUI();renderProducts();return false;}
+      if (!catalogRevision) throw new Error('O catálogo não foi carregado da API protegida. Recarregue o site antes de editar.');
+      const {adminPassword, ...settings} = state.settings;
+      const response = await fetch('/api/products', {method: 'POST', headers: {
+        'Content-Type':'application/json', Authorization:'Bearer ' + key, 'If-Match':catalogRevision,
+        'X-Operation-Id':crypto.randomUUID()
+      }, body:JSON.stringify({settings,products:state.products})});
+      const result = await response.json();
+      if (response.status === 401) sessionStorage.removeItem('so_achado_write_key');
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Gravação não confirmada.');
+      catalogRevision=result.revision;
+      state.products=result.catalog.products;state.settings=result.catalog.settings;
+      sessionStorage.setItem('so_achado_write_key',key);
+      localStorage.setItem(STORAGE_KEY,JSON.stringify({products:state.products,settings:state.settings}));
+      return true;
+    } catch (error) {
+      showToast('Não foi possível salvar: ' + error.message);
+      await loadData();applySettingsToUI();renderProducts();
+      return false;
     }
   }
 
@@ -308,7 +322,7 @@
     }
     setWhatsappUrl.value = state.settings.whatsappUrl || '';
     setTelegramUrl.value = state.settings.telegramUrl || '';
-    if (setAdminPassword) setAdminPassword.value = state.settings.adminPassword || 'admin123';
+    if (setAdminPassword) setAdminPassword.value = "";
     setShowFloating.checked = Boolean(state.settings.showFloatingCard);
   }
 
@@ -612,7 +626,7 @@
       } else if (action === 'delete') {
         if (confirm('Deseja remover este anúncio do site?')) {
           state.products = state.products.filter((p) => p.id !== id);
-          await persistData();
+          if (!await persistData()) return;
           renderProducts();
           showToast('Anúncio removido!');
         }
@@ -630,27 +644,22 @@
       openModal('tab-add');
     });
 
-    adminToggleBtn.addEventListener('click', () => {
-      if (document.body.classList.contains('is-admin')) {
-        openModal('tab-add');
-      } else {
-        const expectedPass = state.settings.adminPassword || 'admin123';
-        const entered = prompt('🔒 Área do Administrador SÓ ACHADO\nDigite sua senha para gerenciar anúncios:');
-        if (entered === null) return;
-        if (entered.trim() === expectedPass) {
-          sessionStorage.setItem('so_achado_admin', '1');
-          document.body.classList.add('is-admin');
-          showToast('🔓 Modo Administrador ativado!');
-          openModal('tab-add');
-        } else {
-          alert('Senha incorreta!');
-        }
-      }
+    adminToggleBtn.addEventListener('click', async () => {
+      if (document.body.classList.contains('is-admin')) { openModal('tab-add'); return; }
+      const key=await window.SO_ACHADO_AUTH.askKey();if(!key)return;
+      try {
+        const response=await fetch('/api/radar',{headers:{Authorization:'Bearer '+key}});
+        const result=await response.json();
+        if(!response.ok||!result.ready)throw new Error(result.error||'Acesso não confirmado.');
+        sessionStorage.setItem('so_achado_write_key',key);sessionStorage.setItem('so_achado_admin','1');
+        document.body.classList.add('is-admin');openModal('tab-add');
+      }catch(error){sessionStorage.removeItem('so_achado_write_key');showToast(error.message);}
     });
 
     if (lockAdminBtn) {
       lockAdminBtn.addEventListener('click', () => {
         sessionStorage.removeItem('so_achado_admin');
+        sessionStorage.removeItem('so_achado_write_key');
         document.body.classList.remove('is-admin');
         closeModal();
         showToast('👁️ Visualizando como visitante (clique no ícone 👤 para voltar ao Admin)');
@@ -663,7 +672,7 @@
         const origText = cloudSyncBtn.innerHTML;
         cloudSyncBtn.innerHTML = '<span>⏳ Sincronizando...</span>';
         try {
-          await persistData();
+          if (!await persistData()) return;
           if (!isLocalEnvironment()) {
             showToast('🚀 Site online atualizado em tempo real!');
             return;
@@ -746,14 +755,15 @@
       const existingIdx = state.products.findIndex((p) => p.id === id);
       if (existingIdx >= 0) {
         state.products[existingIdx] = newProduct;
-        showToast('✅ Anúncio atualizado com sucesso!');
+
       } else {
         // Add to the beginning so the newest deal appears first!
         state.products.unshift(newProduct);
-        showToast('🎉 Novo achado publicado no site!');
+
       }
 
-      await persistData();
+      if (!await persistData()) return;
+      showToast(existingIdx>=0?'✅ Anúncio atualizado com sucesso!':'🎉 Novo achado publicado no site!');
       renderProducts();
       closeModal();
       resetForm();
@@ -763,13 +773,11 @@
     saveSettingsBtn.addEventListener('click', async () => {
       state.settings.whatsappUrl = setWhatsappUrl.value.trim() || 'https://chat.whatsapp.com/';
       state.settings.telegramUrl = setTelegramUrl.value.trim() || 'https://t.me/';
-      if (setAdminPassword && setAdminPassword.value.trim()) {
-        state.settings.adminPassword = setAdminPassword.value.trim();
-      }
+
       state.settings.showFloatingCard = setShowFloating.checked;
 
       applySettingsToUI();
-      await persistData();
+      if (!await persistData()) return;
       showToast('⚙️ Configurações salvas com sucesso!');
       closeModal();
     });
@@ -796,7 +804,7 @@
       if (confirm('Deseja restaurar os 4 produtos originais de exemplo da imagem?')) {
         if (window.SO_ACHADO_INITIAL_DATA) {
           state.products = JSON.parse(JSON.stringify(window.SO_ACHADO_INITIAL_DATA.products));
-          await persistData();
+          if (!await persistData()) return;
           renderProducts();
           showToast('Produtos de exemplo restaurados!');
           closeModal();
