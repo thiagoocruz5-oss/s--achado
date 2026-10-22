@@ -625,7 +625,7 @@
         const prod = state.products.find((p) => p.id === id);
         if (prod) populateFormForEdit(prod);
       } else if (action === 'delete') {
-        if (confirm('Deseja remover este anúncio do site?')) {
+        if (await confirmAction('Deseja remover este anúncio do site?')) {
           state.products = state.products.filter((p) => p.id !== id);
           if (!await persistData()) return;
           renderProducts();
@@ -787,7 +787,7 @@
     document.getElementById('undoLastChangeBtn').addEventListener('click',async()=>{
       const backupId=sessionStorage.getItem('so_achado_last_backup');
       if(!backupId){showToast('Nenhuma alteração desta sessão disponível para desfazer.');return;}
-      if(!confirm('Recuperar o catálogo anterior à última alteração desta sessão?'))return;
+      if(!await confirmAction('Recuperar o catálogo anterior à última alteração desta sessão?'))return;
       try {
         const key=await window.SO_ACHADO_AUTH.askKey();if(!key)return;
         const response=await fetch('/api/radar',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},
@@ -815,7 +815,7 @@
 
     // Reset Default Products
     resetDefaultBtn.addEventListener('click', async () => {
-      if (confirm('Deseja restaurar os 4 produtos originais de exemplo da imagem?')) {
+      if (await confirmAction('Deseja restaurar os 4 produtos originais de exemplo da imagem?')) {
         if (window.SO_ACHADO_INITIAL_DATA) {
           state.products = JSON.parse(JSON.stringify(window.SO_ACHADO_INITIAL_DATA.products));
           if (!await persistData()) return;
@@ -880,6 +880,20 @@
     previewImg.src = prod.image || 'assets/airfryer.svg';
     document.getElementById('saveProdBtn').textContent = '💾 Salvar Alterações';
     openModal('tab-add');
+  }
+
+  function confirmAction(message) {
+    return new Promise(resolve=>{
+      const dialog=document.createElement('dialog');
+      dialog.style.cssText='border:0;border-radius:16px;padding:24px;max-width:420px;font:16px Arial;color:#351147';
+      const text=document.createElement('p');text.textContent=message;
+      const cancel=document.createElement('button');cancel.textContent='Cancelar';cancel.className='btn-secondary';
+      const yes=document.createElement('button');yes.textContent='Confirmar';yes.className='btn-primary-save';
+      const finish=value=>{dialog.close();dialog.remove();resolve(value);};
+      cancel.onclick=()=>finish(false);yes.onclick=()=>finish(true);
+      dialog.addEventListener('cancel',e=>{e.preventDefault();finish(false);});
+      dialog.append(text,cancel,yes);document.body.append(dialog);dialog.showModal();
+    });
   }
 
   function showToast(text) {
