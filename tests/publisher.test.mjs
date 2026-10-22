@@ -107,3 +107,9 @@ test('prévia usa caminhos de armazenamento diferentes de produção',async()=>{
   assert.ok(paths[1].startsWith('so-achado-preview/test/backups/'));
   assert.equal(paths[2],'so-achado/catalog/current.json');
 });
+
+test('saúde reconhece identidade gerenciada no cabeçalho da Function sem expor o token',async()=>{
+  const {service}=setup(),handler=createHandler(service,{getEnv:()=>({BLOB_STORE_ID:'test-store'})}),res=response();
+  await handler({method:'GET',headers:{'x-vercel-oidc-token':'test-only-runtime-identity'},query:{health:'1'}},res);
+  assert.equal(res.body.storageConfigured,true);assert.equal(JSON.stringify(res.body).includes('runtime-identity'),false);
+});
