@@ -113,3 +113,12 @@ test('saúde reconhece identidade gerenciada no cabeçalho da Function sem expor
   await handler({method:'GET',headers:{'x-vercel-oidc-token':'test-only-runtime-identity'},query:{health:'1'}},res);
   assert.equal(res.body.storageConfigured,true);assert.equal(JSON.stringify(res.body).includes('runtime-identity'),false);
 });
+
+test('configuração tolera espaços ao colar o resumo e diagnostica formato sem revelar seu valor',async()=>{
+  const {service}=setup();
+  for(const [value,expected] of [[' '+hash+'\n','ready'],['','missing'],['not-a-sha256','invalid-format']]) {
+    const handler=createHandler(service,{getEnv:()=>({RADAR_WRITE_KEY_HASH:value})}),res=response();
+    await handler({method:'GET',headers:{},query:{health:'1'}},res);
+    assert.equal(res.body.keyConfiguration,expected);assert.equal(JSON.stringify(res.body).includes(hash),false);
+  }
+});
