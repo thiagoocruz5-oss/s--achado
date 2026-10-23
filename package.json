@@ -1,0 +1,1 @@
+{"name":"so-achado-site-protegido","version":"0.2.0","private":true,"type":"module","engines":{"node":"22.x"},"dependencies":{"@vercel/blob":"2.6.1"},"scripts":{"test":"node --test tests/*.test.mjs"}}
