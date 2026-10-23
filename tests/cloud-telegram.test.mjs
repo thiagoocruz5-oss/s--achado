@@ -15,12 +15,13 @@ function setup(){
     telegram:{connect:async()=>({id:GROUP_ID}),sendPhoto:async(token,id,photo,caption)=>{
       assert.ok((await store.read()).pending);sent.push({id,photo,caption});if(fail)throw new Error('erro '+token);return {message_id:sent.length};
     }}});
-  return {cloud,store,credentials,sent,advance:()=>clock+=3*3600000,fail:()=>fail=true,feed:v=>feed=v};
+  return {cloud,store,credentials,sent,advance:(minutes=60)=>clock+=minutes*60000,fail:()=>fail=true,feed:v=>feed=v};
 }
-test('envio em nuvem usa catálogo publicado, cinco por lote, intervalo de três horas e reinício do ciclo',async()=>{
+test('envio em nuvem usa catálogo publicado, cinco por lote, intervalo de uma hora e reinício do ciclo',async()=>{
   const h=setup();assert.equal((await h.cloud.run()).status,'disabled');
   await h.cloud.configure('private-token');await h.cloud.enable(true);await h.cloud.run();assert.equal(h.sent.length,5);
-  assert.equal((await h.cloud.run()).status,'waiting');h.advance();await h.cloud.run();assert.equal(h.sent.length,7);
+  assert.equal((await h.cloud.run()).status,'waiting');h.advance(59);assert.equal((await h.cloud.run()).status,'waiting');
+  assert.equal(h.sent.length,5);h.advance(1);await h.cloud.run();assert.equal(h.sent.length,7);
   h.advance();await h.cloud.run();assert.equal(h.sent.length,12);assert.equal((await h.cloud.status()).cycle,2);
   assert.ok(h.sent[0].caption.includes('https://so-achado.vercel.app/'));assert.ok(h.sent[0].caption.includes('https://meli.la/Oferta1'));
   assert.ok(!h.sent[0].caption.includes('comissão'));assert.ok(!JSON.stringify(await h.cloud.status()).includes('private-token'));

@@ -6,7 +6,7 @@ No site, entre com sua senha, abra Configurações e escolha **Envio ao Telegram
 
 Desligue o envio local dos produtos na extensão. Na versão 0.6.0, o envio local também consulta a ativação em nuvem antes de mandar um lote e pausa para evitar duas fontes publicando juntas. Recarregar a extensão desativa a automação local.
 
-Até cinco produtos são enviados por lote. O próximo só é liberado três horas depois. O agendador GitHub Actions consulta a função a cada quinze minutos: pode haver atraso de alguns minutos, e o GitHub não garante pontualidade. Depois de percorrer todo o catálogo, o lote seguinte começa novamente. Os produtos são lidos novamente a cada lote. Há foto, título, preço anunciado, link com afiliado e link do site.
+Até cinco produtos são enviados por lote. O próximo só é liberado uma hora depois. O agendador GitHub Actions consulta a função a cada cinco minutos: o GitHub pode atrasar ou omitir execuções e não garante pontualidade. Depois de percorrer todo o catálogo, o lote seguinte começa novamente. Os produtos são lidos novamente a cada lote. Há foto, título, preço anunciado, link com afiliado e link do site.
 
 Um resultado incerto pausa o envio. Confira o grupo e marque a pendência no painel antes de reativar. O produto fica marcado como percorrido neste ciclo para evitar repetição imediata. Escrita condicional e um bloqueio por lote impedem execuções concorrentes. Não há repetição automática de uma requisição de envio sem confirmação.
 
