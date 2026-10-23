@@ -86,6 +86,10 @@
 
   // ==================== INITIALIZATION ====================
   async function init() {
+    if (!isLocalEnvironment()) {
+      const connected=await window.SO_ACHADO_AUTH.restore();
+      if(connected)sessionStorage.setItem("so_achado_admin","1");else sessionStorage.removeItem("so_achado_admin");
+    }
     initAdminMode();
     loadFavorites();
     await loadData();
@@ -187,21 +191,20 @@
       return true;
     }
     try {
-      const key = await window.SO_ACHADO_AUTH.askKey();
-      if (!key) {await loadData();applySettingsToUI();renderProducts();return false;}
+      const access = await window.SO_ACHADO_AUTH.headers();
+      if (!access) {await loadData();applySettingsToUI();renderProducts();return false;}
       if (!catalogRevision) throw new Error('O catálogo não foi carregado da API protegida. Recarregue o site antes de editar.');
       const {adminPassword, ...settings} = state.settings;
       const response = await fetch('/api/products', {method: 'POST', headers: {
-        'Content-Type':'application/json', Authorization:'Bearer ' + key, 'If-Match':catalogRevision,
+        'Content-Type':'application/json', ...access, 'If-Match':catalogRevision,
         'X-Operation-Id':crypto.randomUUID()
       }, body:JSON.stringify({settings,products:state.products})});
       const result = await response.json();
-      if (response.status === 401) sessionStorage.removeItem('so_achado_write_key');
+      if (response.status === 401) window.SO_ACHADO_AUTH.clear();
       if (!response.ok || !result.ok) throw new Error(result.error || 'Gravação não confirmada.');
       catalogRevision=result.revision;
       sessionStorage.setItem('so_achado_last_backup',result.backupId);
       state.products=result.catalog.products;state.settings=result.catalog.settings;
-      sessionStorage.setItem('so_achado_write_key',key);
       localStorage.setItem(STORAGE_KEY,JSON.stringify({products:state.products,settings:state.settings}));
       return true;
     } catch (error) {
@@ -647,18 +650,15 @@
 
     adminToggleBtn.addEventListener('click', async () => {
       if (document.body.classList.contains('is-admin')) { openModal('tab-add'); return; }
-      const key=await window.SO_ACHADO_AUTH.askKey();if(!key)return;
       try {
-        const response=await fetch('/api/radar',{headers:{Authorization:'Bearer '+key}});
-        const result=await response.json();
-        if(!response.ok||!result.ready)throw new Error(result.error||'Acesso não confirmado.');
-        sessionStorage.setItem('so_achado_write_key',key);sessionStorage.setItem('so_achado_admin','1');
-        document.body.classList.add('is-admin');openModal('tab-add');
-      }catch(error){sessionStorage.removeItem('so_achado_write_key');showToast(error.message);}
+        if(!await window.SO_ACHADO_AUTH.ensure())return;
+        sessionStorage.setItem('so_achado_admin','1');document.body.classList.add('is-admin');openModal('tab-add');
+      }catch(error){window.SO_ACHADO_AUTH.clear();showToast(error.message);}
     });
 
     if (lockAdminBtn) {
-      lockAdminBtn.addEventListener('click', () => {
+      lockAdminBtn.addEventListener('click', async () => {
+        try{await window.SO_ACHADO_AUTH.logout();}catch{showToast('Não foi possível encerrar a sessão no servidor.');return;}
         sessionStorage.removeItem('so_achado_admin');
         sessionStorage.removeItem('so_achado_write_key');
         document.body.classList.remove('is-admin');
@@ -770,6 +770,8 @@
       resetForm();
     });
 
+    document.getElementById("configureAdminPasswordBtn").addEventListener("click",async()=>{try{if(await window.SO_ACHADO_AUTH.configure())showToast("Senha salva. Seu acesso está conectado.");}catch(error){showToast(error.message);}});
+
     // Save Settings
     saveSettingsBtn.addEventListener('click', async () => {
       state.settings.whatsappUrl = setWhatsappUrl.value.trim() || 'https://chat.whatsapp.com/';
@@ -789,8 +791,8 @@
       if(!backupId){showToast('Nenhuma alteração desta sessão disponível para desfazer.');return;}
       if(!await confirmAction('Recuperar o catálogo anterior à última alteração desta sessão?'))return;
       try {
-        const key=await window.SO_ACHADO_AUTH.askKey();if(!key)return;
-        const response=await fetch('/api/radar',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},
+        const access=await window.SO_ACHADO_AUTH.headers();if(!access)return;
+        const response=await fetch('/api/radar',{method:'POST',headers:{'Content-Type':'application/json',...access},
           body:JSON.stringify({action:'restore',backupId,expectedRevision:catalogRevision,operationId:crypto.randomUUID()})});
         const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Recuperação não confirmada.');
         sessionStorage.removeItem('so_achado_last_backup');

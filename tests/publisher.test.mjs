@@ -22,6 +22,21 @@ const options=revision=>({expectedRevision:revision,operationId:randomUUID(),con
 test('autenticação exige chave forte correspondente ao resumo, sem aceitar a senha antiga',()=> {
   assert.equal(authorized('Bearer '+token,hash),true);assert.equal(authorized('Bearer admin123',hash),false);assert.equal(authorized('',hash),false);assert.equal(authorized('Bearer '+token,''),false);
 });
+
+test('produtos automáticos antigos em Variedades são exibidos na categoria inferida sem alterar preços e links',async()=>{
+  const raw={revision:'existing',catalog:{settings:{},products:[
+    {...offer(),id:'radar-house',title:'Escorredor De Louças Preto Aço',category:'variedades'},
+    {...offer(),id:'radar-tech',title:'Notebook Acer Aspire',category:'variedades'},
+    {...offer(),id:'manual',title:'Panela',category:'variedades',identityVerified:false},
+    {...offer(),id:'custom',title:'Panela',category:'beleza'}
+  ]}};
+  const snapshot=structuredClone(raw),view=publicView(raw);
+  assert.deepEqual(view.products.map(p=>p.category),['casa','tecnologia','variedades','beleza']);
+  for(let i=0;i<raw.catalog.products.length;i++)for(const field of ['id','title','price','image','affiliateUrl'])assert.equal(view.products[i][field],raw.catalog.products[i][field]);
+  assert.deepEqual(raw,snapshot,'A leitura não grava nem modifica o registro privado.');
+  const service=createService({read:async()=>structuredClone(raw)},seed);
+  assert.equal((await service.read()).catalog.products[0].category,'casa');
+});
 test('publicação substitui somente um produto, preserva configurações e salva cópia antes',async()=> {
   const {service,backups}=setup(),before=await service.read();const result=await service.publish(offer(),options(before.revision));
   assert.equal(result.record.catalog.products.length,3);assert.equal(result.record.catalog.products[0].price,before.catalog.products[0].price);
