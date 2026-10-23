@@ -45,10 +45,13 @@ test('catálogo vazio não envia; mensagens longas continuam dentro do limite',a
 test('identidade do agendador exige assinatura GitHub, repositório, workflow, audience e validade corretos',async()=>{
   const {privateKey,publicKey}=generateKeyPairSync('rsa',{modulusLength:2048});const key={...publicKey.export({format:'jwk'}),kid:'test-key',alg:'RS256'};
   const clock=1800000000000,time=clock/1000,repo='thiagoocruz5-oss/s--achado';
-  const claims={iss:'https://token.actions.githubusercontent.com',aud:CLOUD_AUDIENCE,sub:`repo:${repo}:ref:refs/heads/main`,repository:repo,ref:'refs/heads/main',workflow_ref:`${repo}/.github/workflows/telegram-offers.yml@refs/heads/main`,event_name:'schedule',iat:time,exp:time+300};
+  const claims={iss:'https://token.actions.githubusercontent.com',aud:CLOUD_AUDIENCE,sub:`repo:${repo}:ref:refs/heads/main`,repository:repo,repository_id:'1430008690',repository_owner_id:'329791131',ref:'refs/heads/main',workflow_ref:`${repo}/.github/workflows/telegram-offers.yml@refs/heads/main`,event_name:'schedule',iat:time,exp:time+300};
   const jwt=patch=>{const parts=[{alg:'RS256',kid:'test-key'},{...claims,...patch}].map(p=>Buffer.from(JSON.stringify(p)).toString('base64url'));return 'Bearer '+parts.join('.')+'.'+sign('RSA-SHA256',Buffer.from(parts.join('.')),privateKey).toString('base64url');};
   const verifier=createGitHubVerifier({now:()=>clock,fetcher:async()=>({ok:true,json:async()=>({keys:[key]})})});
   assert.equal(await verifier(jwt({})),true);
+  assert.equal(await verifier(jwt({sub:'repo:thiagoocruz5-oss@329791131/s--achado@1430008690:ref:refs/heads/main'})),true);
+  assert.equal(await verifier(jwt({repository_id:'999'})),false);
+  assert.equal(await verifier(jwt({sub:'repo:thiagoocruz5-oss@999/s--achado@1430008690:ref:refs/heads/main'})),false);
   for(const patch of [{aud:'other'},{repository:'attacker/repo'},{workflow_ref:'other'},{exp:time-1},{event_name:'pull_request'},{iat:time-1000}])assert.equal(await verifier(jwt(patch)),false);
   assert.equal(await verifier(jwt({}).slice(0,-10)+'AAAAAAAAAA'),false);assert.equal(await verifier(''),false);
 });
