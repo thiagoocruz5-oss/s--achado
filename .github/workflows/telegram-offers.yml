@@ -1,0 +1,33 @@
+name: Ofertas do site no Telegram
+on:
+  schedule:
+    # Consulta a cada 15 minutos; o servidor só libera lotes separados por 3h.
+    - cron: '2,17,32,47 * * * *'
+  workflow_dispatch:
+permissions:
+  id-token: write
+concurrency:
+  group: telegram-offers-production
+  cancel-in-progress: false
+jobs:
+  send:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Solicitar lote ao servidor de produção
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          const endpoint='https://so-achado.vercel.app/api/telegram';
+          const url=new URL(process.env.ACTIONS_ID_TOKEN_REQUEST_URL);
+          url.searchParams.set('audience',endpoint);
+          const identity=await fetch(url,{headers:{Authorization:'Bearer '+process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN},signal:AbortSignal.timeout(15000)});
+          if(!identity.ok)throw new Error('Não foi possível confirmar a identidade do agendador.');
+          const token=(await identity.json()).value;
+          const response=await fetch(endpoint,{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}',redirect:'error',signal:AbortSignal.timeout(150000)});
+          if(!response.ok)throw new Error('Servidor recusou o lote. Confira o painel de divulgação no site.');
+          const result=await response.json();
+          if(result.status==='review')throw new Error('Envio pausado: confira a mensagem pendente no grupo e no painel do site.');
+          console.log('Estado:',String(result.status),'Ofertas enviadas:',Number(result.sent)||0);
+          NODE
